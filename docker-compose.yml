@@ -1,4 +1,4 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
   backend:
@@ -22,6 +22,12 @@ services:
       DB_HOST: mongodb
       DB_PORT: 27017
       DB_DATABASE: maps_scraper
+      DB_USERNAME: maps_user
+      DB_PASSWORD: maps_password
+      DB_AUTHENTICATION_DATABASE: maps_scraper
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      CACHE_STORE: file
     ports:
       - "8000:8000"
 
