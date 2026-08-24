@@ -1,0 +1,364 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Harita Kaziyici API Dokumantasyonu",
+        "description": "Google Haritalar isletme verisi kazima ve disa aktarma REST API dokumantasyonu.",
+        "contact": {
+            "email": "bilgi@haritakaziyici.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Birincil API Sunucusu"
+        }
+    ],
+    "paths": {
+        "/api/export/excel": {
+            "get": {
+                "tags": [
+                    "Disa Aktarma Islemleri"
+                ],
+                "summary": "Isletmeleri Excel (XLSX) formatinda indirme",
+                "description": "Kayitli tum isletmeleri veya belirli bir goreve ait isletmeleri XLSX formatinda disa aktarir.",
+                "operationId": "fbace95b36d3b6f041049ba0a1083ced",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "query",
+                        "description": "Tarama gorev kimlik numarasi",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Excel dosyasi basariyla olusturuldu",
+                        "content": {
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/api/export/pdf": {
+            "get": {
+                "tags": [
+                    "Disa Aktarma Islemleri"
+                ],
+                "summary": "Isletmeleri PDF formatinda indirme",
+                "description": "Kayitli tum isletmeleri veya belirli bir goreve ait isletmeleri PDF formatinda disa aktarir.",
+                "operationId": "147a73d571fcf177ca26870d6cef005d",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "query",
+                        "description": "Tarama gorev kimlik numarasi",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PDF dosyasi basariyla olusturuldu",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/api/export/image": {
+            "get": {
+                "tags": [
+                    "Disa Aktarma Islemleri"
+                ],
+                "summary": "Isletmeleri Resim (PNG) formatinda indirme",
+                "description": "Kayitli tum isletmeleri veya belirli bir goreve ait isletmeleri PNG gorsel tablosu olarak disa aktarir.",
+                "operationId": "43eb45b23619c29cf9b6a401e422c75e",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "query",
+                        "description": "Tarama gorev kimlik numarasi",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PNG resmi basariyla olusturuldu",
+                        "content": {
+                            "image/png": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/api/scrape": {
+            "post": {
+                "tags": [
+                    "Tarama Islemleri"
+                ],
+                "summary": "Harita uzerinden isletme verisi kazima",
+                "description": "Belirtilen koordinat ve yari cap icindeki isletmeleri Google Haritalar uzerinden tarar ve veritabanina kaydeder.",
+                "operationId": "8eaa3815a9146580ab1feed816d4a3f5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "latitude",
+                                    "longitude",
+                                    "radius"
+                                ],
+                                "properties": {
+                                    "latitude": {
+                                        "description": "Merkez enlem derecesi (-90 ile 90 arasi)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 39.9334
+                                    },
+                                    "longitude": {
+                                        "description": "Merkez boylam derecesi (-180 ile 180 arasi)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 32.8597
+                                    },
+                                    "radius": {
+                                        "description": "Metre cinsinden dairesel tarama yari capi",
+                                        "type": "integer",
+                                        "example": 1000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tarama basariyla tamamlandi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tarama islemi basariyla tamamlandi."
+                                        },
+                                        "job_id": {
+                                            "type": "string",
+                                            "example": "66c9f28d8b9e1a2b3c4d5e6f"
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Gecersiz parametreler",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lutfen gecerli koordinat ve yari cap bilgisi giriniz."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Sunucu hatasi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tarama sirasinda bir sunucu hatasi olustu."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/businesses": {
+            "get": {
+                "tags": [
+                    "Isletme Verileri"
+                ],
+                "summary": "Kayitli isletmeleri listeleme",
+                "description": "Veritabaninda kayitli olan isletmeleri listeler. Istege bagli olarak tarama gorevine gore filtrelenebilir.",
+                "operationId": "7dc3197464caae4ca2a6c3bbd98443d1",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "query",
+                        "description": "Tarama gorevi kimlik numarasi (ID)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Dondurulecek maksimum kayit sayisi (varsayilan: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Isletmeler basariyla getirildi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/jobs/{id}": {
+            "get": {
+                "tags": [
+                    "Tarama Islemleri"
+                ],
+                "summary": "Tarama gorevi durumu sorgulama",
+                "description": "Belirtilen kimlik numarasina sahip tarama gorevinin durumunu ve sonucunu getirir.",
+                "operationId": "adb4901616fd17679dfdc5d07d6658a0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Gorev kimlik numarasi",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gorev bilgisi bulundu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Gorev bulunamadi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Belirtilen tarama gorevi bulunamadi."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Disa Aktarma Islemleri",
+            "description": "Disa Aktarma Islemleri"
+        },
+        {
+            "name": "Tarama Islemleri",
+            "description": "Tarama Islemleri"
+        },
+        {
+            "name": "Isletme Verileri",
+            "description": "Isletme Verileri"
+        }
+    ]
+}
