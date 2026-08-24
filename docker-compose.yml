@@ -1,0 +1,66 @@
+﻿version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: maps_backend
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+      - ./backend/.env:/var/www/.env
+    networks:
+      - maps_network
+    depends_on:
+      - mongodb
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mongodb
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      DB_DATABASE: maps_scraper
+    ports:
+      - "8000:8000"
+
+  mongodb:
+    image: mongo:7.0
+    container_name: maps_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: maps_scraper
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - maps_network
+    ports:
+      - "27017:27017"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: maps_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - maps_network
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+networks:
+  maps_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

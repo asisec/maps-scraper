@@ -1,0 +1,12 @@
+﻿backend/.env
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/bootstrap/cache/*.php
+backend/.phpunit.result.cache
+frontend/node_modules/
+frontend/dist/
+docker/mongo/data/
+.DS_Store
+*.swp
+*.swo

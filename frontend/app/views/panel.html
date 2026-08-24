@@ -1,0 +1,95 @@
+﻿<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#/panel">
+            <i class="fas fa-map-marked-alt me-2"></i>Harita Kazıyıcı
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="#/admin">
+                <i class="fas fa-user-shield me-1"></i>Yönetim
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="main-container container-fluid">
+    <div class="loading-overlay" ng-if="isLoading">
+        <div class="spinner-container">
+            <div class="spinner-border text-primary mb-3" style="width:3rem; height:3rem;" role="status"></div>
+            <p class="mb-0 fw-semibold">İşletmeler taranıyor, lütfen bekleyin...</p>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="alert alert-danger alert-placeholder" ng-if="errorMessage" ng-bind="errorMessage"></div>
+            <div class="alert alert-success alert-placeholder" ng-if="successMessage" ng-bind="successMessage"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-draw-polygon me-2"></i>Tarama Alanı Seç</span>
+                    <button class="btn btn-primary btn-sm" ng-click="startScrape()" ng-disabled="isLoading">
+                        <i class="fas fa-search me-1"></i>Taramayı Başlat
+                    </button>
+                </div>
+                <div id="map-canvas" style="height: 450px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" ng-if="businesses.length > 0">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><i class="fas fa-list me-2"></i>Bulunan İşletmeler ({{ businesses.length }})</span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-success btn-export btn-sm" ng-click="exportExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Excel Olarak İndir
+                        </button>
+                        <button class="btn btn-danger btn-export btn-sm" ng-click="exportPdf()">
+                            <i class="fas fa-file-pdf me-1"></i>PDF Olarak İndir
+                        </button>
+                        <button class="btn btn-info btn-export btn-sm text-white" ng-click="exportImage()">
+                            <i class="fas fa-file-image me-1"></i>Resim Olarak İndir
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>İşletme Adı</th>
+                                    <th>Açık Adres</th>
+                                    <th>Ortalama Yıldız</th>
+                                    <th>Telefon</th>
+                                    <th>E-posta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="business in businesses track by $index">
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ business.name || "-" }}</td>
+                                    <td>{{ business.address || "-" }}</td>
+                                    <td>
+                                        <span ng-if="business.rating">
+                                            <i class="fas fa-star text-warning"></i>
+                                            {{ business.rating }}
+                                        </span>
+                                        <span ng-if="!business.rating">-</span>
+                                    </td>
+                                    <td>{{ business.phone || "-" }}</td>
+                                    <td>{{ business.email || "-" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
