@@ -1,10 +1,11 @@
-﻿name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
       - "feature/**"
+      - "fix/**"
   pull_request:
     branches:
       - main
@@ -38,7 +39,7 @@ jobs:
         with:
           php-version: "8.2"
           extensions: mongodb, mbstring, xml, ctype, json, bcmath, gd
-          coverage: xdebug
+          coverage: none
 
       - name: Copy Laravel environment file
         working-directory: ./backend
@@ -58,10 +59,14 @@ jobs:
           DB_CONNECTION: mongodb
           DB_HOST: 127.0.0.1
           DB_PORT: 27017
-          DB_DATABASE: maps_scraper_test
+          DB_DATABASE: maps_scraper
           DB_USERNAME: root
           DB_PASSWORD: secret
-        run: php artisan test --parallel
+          DB_AUTHENTICATION_DATABASE: admin
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+          CACHE_STORE: array
+        run: php artisan test
 
   frontend-tests:
     name: AngularJS Frontend Lint and Build
@@ -74,7 +79,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
