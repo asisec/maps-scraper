@@ -1,4 +1,4 @@
-﻿angular.module("mapsScraperApp").controller("PanelController", [
+angular.module("mapsScraperApp").controller("PanelController", [
     "$scope",
     "ScraperService",
     function ($scope, ScraperService) {
@@ -11,7 +11,7 @@
         $scope.drawingManager = null;
 
         $scope.initMap = function () {
-            var mapOptions = {
+            const mapOptions = {
                 center: { lat: 39.9334, lng: 32.8597 },
                 zoom: 12,
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -61,8 +61,8 @@
                 return;
             }
 
-            var center = $scope.selectedCircle.getCenter();
-            var radius = Math.round($scope.selectedCircle.getRadius());
+            const center = $scope.selectedCircle.getCenter();
+            const radius = Math.round($scope.selectedCircle.getRadius());
 
             $scope.isLoading = true;
             $scope.errorMessage = null;

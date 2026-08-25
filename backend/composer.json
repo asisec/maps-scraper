@@ -12,7 +12,8 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "*",
-        "mongodb/laravel-mongodb": "^5.0"
+        "mongodb/laravel-mongodb": "^5.0",
+        "mongodb/mongodb": ">=1.21.0 <2.4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

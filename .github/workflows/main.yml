@@ -47,7 +47,7 @@ jobs:
 
       - name: Install Composer dependencies
         working-directory: ./backend
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-req=ext-mongodb
 
       - name: Generate application key
         working-directory: ./backend
