@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build 2>/dev/null || npx http-server . -p 8080 --silent &
+RUN npm run build
 
 FROM nginx:1.25-alpine
 
@@ -16,7 +16,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=builder /app /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
