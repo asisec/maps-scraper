@@ -1,4 +1,4 @@
-﻿angular.module("mapsScraperApp").service("ScraperService", [
+angular.module("mapsScraperApp").service("ScraperService", [
     "$http",
     "$window",
     "API_URL",
@@ -11,16 +11,24 @@
             });
         };
 
-        this.exportExcel = function () {
-            $window.open(API_URL + "/export/excel", "_blank");
+        this.getBusinesses = function (jobId) {
+            const params = jobId ? { job_id: jobId } : {};
+            return $http.get(API_URL + "/businesses", { params: params });
         };
 
-        this.exportPdf = function () {
-            $window.open(API_URL + "/export/pdf", "_blank");
+        this.exportExcel = function (jobId) {
+            const url = API_URL + "/export/excel" + (jobId ? "?job_id=" + encodeURIComponent(jobId) : "");
+            $window.open(url, "_blank");
         };
 
-        this.exportImage = function () {
-            $window.open(API_URL + "/export/image", "_blank");
+        this.exportPdf = function (jobId) {
+            const url = API_URL + "/export/pdf" + (jobId ? "?job_id=" + encodeURIComponent(jobId) : "");
+            $window.open(url, "_blank");
+        };
+
+        this.exportImage = function (jobId) {
+            const url = API_URL + "/export/image" + (jobId ? "?job_id=" + encodeURIComponent(jobId) : "");
+            $window.open(url, "_blank");
         };
     },
 ]);
