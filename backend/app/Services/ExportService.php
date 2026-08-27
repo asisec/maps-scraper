@@ -24,6 +24,7 @@ class ExportService
 
     public function exportXlsx(?string $jobId = null): BinaryFileResponse
     {
+        ini_set('memory_limit', '512M');
         $businesses = $this->getBusinesses($jobId);
         $fileName = 'isletmeler_' . Carbon::now()->format('Ymd_His') . '.xlsx';
         return Excel::download(new BusinessesExport($businesses), $fileName);
@@ -31,6 +32,7 @@ class ExportService
 
     public function exportPdf(?string $jobId = null): Response
     {
+        ini_set('memory_limit', '512M');
         $businesses = $this->getBusinesses($jobId);
         $generatedAt = Carbon::now()->format('d.m.Y H:i:s');
         $fileName = 'isletmeler_' . Carbon::now()->format('Ymd_His') . '.pdf';
@@ -45,6 +47,7 @@ class ExportService
 
     public function exportImage(?string $jobId = null): Response
     {
+        ini_set('memory_limit', '512M');
         $businesses = $this->getBusinesses($jobId);
         $generatedAt = Carbon::now()->format('d.m.Y H:i:s');
         $fileName = 'isletmeler_' . Carbon::now()->format('Ymd_His') . '.png';
@@ -59,11 +62,12 @@ class ExportService
 
     protected function generateTableImage(Collection $businesses, string $generatedAt): string
     {
+        $displayBusinesses = $businesses->take(50);
         $width = 1200;
         $rowHeight = 36;
         $headerHeight = 110;
         $footerHeight = 40;
-        $rowCount = max(1, $businesses->count());
+        $rowCount = max(1, $displayBusinesses->count());
         $height = $headerHeight + ($rowCount * $rowHeight) + $footerHeight;
 
         $image = imagecreatetruecolor($width, $height);
@@ -102,13 +106,13 @@ class ExportService
         }
 
         $y = 102;
-        if ($businesses->isEmpty()) {
+        if ($displayBusinesses->isEmpty()) {
             imagefilledrectangle($image, 10, $y, $width - 10, $y + $rowHeight, $white);
             imagerectangle($image, 10, $y, $width - 10, $y + $rowHeight, $border);
             imagestring($image, 3, 500, $y + 10, 'Kayitli isletme bulunamadi.', $textMuted);
             $y += $rowHeight;
         } else {
-            foreach ($businesses as $index => $business) {
+            foreach ($displayBusinesses as $index => $business) {
                 $rowBg = ($index % 2 === 0) ? $white : $rowAlt;
                 imagefilledrectangle($image, 10, $y, $width - 10, $y + $rowHeight, $rowBg);
                 imagerectangle($image, 10, $y, $width - 10, $y + $rowHeight, $border);
