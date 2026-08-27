@@ -1,21 +1,23 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
-    <div class="container-fluid">
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top shadow-sm py-2">
+    <div class="container-fluid px-4">
         <a class="navbar-brand d-flex align-items-center" href="#/panel">
-            <i class="fas fa-map-marked-alt text-primary me-2 fs-4"></i>
-            <span class="fw-bold tracking-wide">Harita Kazıyıcı</span>
+            <div class="stat-icon bg-primary bg-opacity-25 text-white me-2" style="width: 38px; height: 38px; border-radius: 10px;">
+                <i class="fas fa-map-marked-alt text-primary"></i>
+            </div>
+            <span>Harita Kazıyıcı <span class="badge bg-primary text-white ms-1" style="font-size: 0.65rem; font-weight: 700;">PRO</span></span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarContent">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto align-items-center gap-1">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#/panel">
-                        <i class="fas fa-search-location me-1"></i>Harita & Tarama
+                    <a class="nav-link active px-3 py-2 rounded-3 fw-semibold" href="#/panel">
+                        <i class="fas fa-search-location me-1 text-primary"></i>Harita & Tarama
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#/admin">
+                    <a class="nav-link px-3 py-2 rounded-3 text-secondary fw-semibold" href="#/admin">
                         <i class="fas fa-user-shield me-1"></i>Yönetim Paneli
                     </a>
                 </li>
@@ -26,21 +28,21 @@
 
 <div class="main-container container-fluid pb-5">
     <div class="loading-overlay" ng-if="isLoading">
-        <div class="spinner-container shadow">
+        <div class="spinner-container">
             <div class="spinner-border text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
-            <h5 class="fw-bold text-dark mb-1">İşletmeler Taranıyor</h5>
-            <p class="text-muted mb-0 small">Google Haritalar üzerinden veriler toplanıyor, lütfen bekleyin...</p>
+            <h5 class="fw-bold text-dark mb-1">İşletmeler ve Web Siteleri Taranıyor</h5>
+            <p class="text-muted mb-0 small">Harita konumu, web siteleri, e-postalar ve sosyal medya hesapları toplanıyor...</p>
         </div>
     </div>
 
     <div class="row mt-3" ng-if="errorMessage || successMessage">
         <div class="col-12">
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" ng-if="errorMessage">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert" ng-if="errorMessage">
                 <i class="fas fa-exclamation-circle me-2"></i>
                 <span ng-bind="errorMessage"></span>
                 <button type="button" class="btn-close" ng-click="errorMessage = null"></button>
             </div>
-            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" ng-if="successMessage">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert" ng-if="successMessage">
                 <i class="fas fa-check-circle me-2"></i>
                 <span ng-bind="successMessage"></span>
                 <button type="button" class="btn-close" ng-click="successMessage = null"></button>
@@ -48,13 +50,86 @@
         </div>
     </div>
 
+    <div class="row g-3 mb-4" ng-if="businesses.length > 0">
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Toplam İşletme</div>
+                        <div class="stat-val">{{ stats.total }}</div>
+                    </div>
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-building"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Web Sitesi Bulunan</div>
+                        <div class="stat-val text-info">{{ stats.withWebsite }}</div>
+                    </div>
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">E-Posta Tespit Edilen</div>
+                        <div class="stat-val text-success">{{ stats.withEmail }}</div>
+                    </div>
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Telefonu Bulunan</div>
+                        <div class="stat-val text-warning">{{ stats.withPhone }}</div>
+                    </div>
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-phone-volume"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Sosyal Medya Linki</div>
+                        <div class="stat-val text-danger">{{ stats.withSocial }}</div>
+                    </div>
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3">
         <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="card-modern overflow-hidden">
+                <div class="p-3 bg-white border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-draw-polygon text-primary fs-5"></i>
-                        <h6 class="mb-0 fw-bold text-dark">Dairesel Tarama Alanı</h6>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary" style="width: 36px; height: 36px; border-radius: 8px;">
+                            <i class="fas fa-crosshairs"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Dairesel Tarama Alanı</h6>
+                            <small class="text-muted">Merkez ve yarıçap belirleyerek işletmeleri otomatik tarayın</small>
+                        </div>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <div class="btn-group btn-group-sm" role="group" ng-if="hasSelectedArea">
@@ -63,24 +138,24 @@
                             <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 2000, 'btn-outline-secondary': circleRadius !== 2000}" ng-click="setRadiusPreset(2000)">2 km</button>
                             <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 5000, 'btn-outline-secondary': circleRadius !== 5000}" ng-click="setRadiusPreset(5000)">5 km</button>
                         </div>
-                        <span class="badge bg-light text-dark border px-3 py-2" ng-if="hasSelectedArea">
-                            <i class="fas fa-crosshairs text-muted me-1"></i>
+                        <span class="badge bg-light text-dark border px-3 py-2 rounded-3" ng-if="hasSelectedArea">
+                            <i class="fas fa-map-pin text-primary me-1"></i>
                             {{ centerLat }}, {{ centerLng }} | {{ circleRadius }} metre
                         </span>
-                        <button class="btn btn-outline-secondary btn-sm" ng-click="clearSelection()" ng-if="hasSelectedArea" ng-disabled="isLoading">
-                            <i class="fas fa-trash-alt me-1"></i>Alanı Temizle
+                        <button class="btn btn-outline-danger btn-sm rounded-3" ng-click="clearSelection()" ng-if="hasSelectedArea" ng-disabled="isLoading">
+                            <i class="fas fa-trash-alt me-1"></i>Temizle
                         </button>
-                        <button class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" ng-click="startScrape()" ng-disabled="isLoading || !hasSelectedArea">
+                        <button class="btn btn-modern btn-modern-primary btn-sm px-4 shadow-sm" ng-click="startScrape()" ng-disabled="isLoading || !hasSelectedArea">
                             <i class="fas fa-search me-1"></i>Taramayı Başlat
                         </button>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div id="map-canvas" style="height: 480px; width: 100%;"></div>
+                <div class="p-0">
+                    <div id="map-canvas"></div>
                 </div>
-                <div class="card-footer bg-light py-2 text-muted small d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <span><i class="fas fa-mouse-pointer text-primary me-1"></i>Haritada herhangi bir yere tıklayarak tarama merkezini belirleyebilirsiniz.</span>
-                    <span ng-if="hasSelectedArea"><i class="fas fa-arrows-alt text-warning me-1"></i>Mavi noktayı sürükleyerek merkezi, turuncu noktayı sürükleyerek yarıçapı değiştirebilirsiniz.</span>
+                <div class="p-2 px-3 bg-light text-muted small d-flex flex-wrap justify-content-between align-items-center gap-2 border-top">
+                    <span><i class="fas fa-info-circle text-primary me-1"></i>Haritaya tıklayarak tarama merkezini seçin.</span>
+                    <span ng-if="hasSelectedArea"><i class="fas fa-hand-pointer text-warning me-1"></i>Mavi nokta konumu, turuncu nokta yarıçapı ayarlar.</span>
                 </div>
             </div>
         </div>
@@ -88,85 +163,236 @@
 
     <div class="row mt-4" ng-if="businesses.length > 0">
         <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="card-modern overflow-hidden">
+                <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-building text-primary fs-5"></i>
-                        <h6 class="mb-0 fw-bold text-dark">Bulunan İşletmeler</h6>
-                        <span class="badge bg-primary rounded-pill px-3">{{ businesses.length }}</span>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success" style="width: 36px; height: 36px; border-radius: 8px;">
+                            <i class="fas fa-list-check"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Bulunan İşletmeler</h6>
+                            <small class="text-muted">Toplam {{ filteredBusinesses.length }} işletme listeleniyor</small>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-success btn-sm btn-export px-3 shadow-sm" ng-click="exportExcel()">
-                            <i class="fas fa-file-excel me-1"></i>Excel Olarak İndir
-                        </button>
-                        <button class="btn btn-danger btn-sm btn-export px-3 shadow-sm" ng-click="exportPdf()">
-                            <i class="fas fa-file-pdf me-1"></i>PDF Olarak İndir
-                        </button>
-                        <button class="btn btn-info btn-sm btn-export px-3 text-white shadow-sm" ng-click="exportImage()">
-                            <i class="fas fa-file-image me-1"></i>Resim Olarak İndir
-                        </button>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <div class="input-group input-group-sm" style="width: 220px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0" placeholder="İşletme veya adres ara..." ng-model="searchQuery" ng-change="applyFilter()">
+                        </div>
+
+                        <div class="btn-group btn-group-sm filter-btn-group" role="group">
+                            <button type="button" class="btn" ng-class="{'btn-primary': activeFilter === 'all', 'btn-outline-secondary': activeFilter !== 'all'}" ng-click="setFilter('all')">Tümü</button>
+                            <button type="button" class="btn" ng-class="{'btn-info text-white': activeFilter === 'website', 'btn-outline-secondary': activeFilter !== 'website'}" ng-click="setFilter('website')"><i class="fas fa-globe me-1"></i>Web Siteli</button>
+                            <button type="button" class="btn" ng-class="{'btn-success': activeFilter === 'email', 'btn-outline-secondary': activeFilter !== 'email'}" ng-click="setFilter('email')"><i class="fas fa-envelope me-1"></i>E-Postalı</button>
+                            <button type="button" class="btn" ng-class="{'btn-warning text-dark': activeFilter === 'phone', 'btn-outline-secondary': activeFilter !== 'phone'}" ng-click="setFilter('phone')"><i class="fas fa-phone me-1"></i>Telefonlu</button>
+                        </div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-dark btn-sm dropdown-toggle rounded-3" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-1"></i>Dışa Aktar
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                                <li>
+                                    <a class="dropdown-item py-2" href="" ng-click="exportExcel()">
+                                        <i class="fas fa-file-excel text-success me-2"></i>Excel (.xlsx) İndir
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="" ng-click="exportPdf()">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>PDF Raporu İndir
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="" ng-click="exportImage()">
+                                        <i class="fas fa-file-image text-info me-2"></i>Resim Tablosu (.png) İndir
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th style="width: 50px;" class="text-center">#</th>
-                                    <th>İşletme Adı</th>
-                                    <th>Açık Adres</th>
-                                    <th style="width: 120px;" class="text-center">Puan</th>
-                                    <th>Telefon</th>
-                                    <th>E-posta</th>
-                                    <th style="width: 80px;" class="text-center">İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="business in businesses track by $index">
-                                    <td class="text-center fw-semibold text-muted">{{ $index + 1 }}</td>
-                                    <td>
-                                        <div class="fw-bold text-dark">{{ business.name || "-" }}</div>
-                                        <div class="small text-muted" ng-if="business.website">
-                                            <a ng-href="{{ business.website }}" target="_blank" class="text-decoration-none text-primary">
-                                                <i class="fas fa-external-link-alt me-1"></i>Web Sitesi
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td class="small text-secondary">{{ business.address || "-" }}</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-warning text-dark px-2 py-1 fw-bold" ng-if="business.rating">
-                                            ★ {{ business.rating }}
-                                            <span class="text-muted fw-normal" ng-if="business.reviews_count">({{ business.reviews_count }})</span>
-                                        </span>
-                                        <span class="text-muted" ng-if="!business.rating">-</span>
-                                    </td>
-                                    <td>
-                                        <span ng-if="business.phone">
-                                            <a ng-href="tel:{{ business.phone }}" class="text-decoration-none text-dark">
-                                                <i class="fas fa-phone-alt text-success me-1"></i>{{ business.phone }}
-                                            </a>
-                                        </span>
-                                        <span class="text-muted" ng-if="!business.phone">-</span>
-                                    </td>
-                                    <td>
-                                        <span ng-if="business.email">
-                                            <a ng-href="mailto:{{ business.email }}" class="text-decoration-none text-primary">
-                                                <i class="fas fa-envelope text-primary me-1"></i>{{ business.email }}
-                                            </a>
-                                        </span>
-                                        <span class="text-muted" ng-if="!business.email">-</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-outline-primary btn-sm rounded-circle p-1" style="width: 32px; height: 32px;" ng-click="highlightMarker($index)" title="Haritada Göster">
-                                            <i class="fas fa-map-marker-alt"></i>
+                <div class="biz-table-wrapper">
+                    <table class="table biz-table align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 45px;" class="text-center">#</th>
+                                <th style="width: 240px;">İşletme & Web Sitesi</th>
+                                <th>Açık Adres</th>
+                                <th style="width: 110px;" class="text-center">Puan</th>
+                                <th style="width: 160px;">İletişim</th>
+                                <th style="width: 180px;">E-Posta</th>
+                                <th style="width: 140px;">Sosyal & WhatsApp</th>
+                                <th style="width: 90px;" class="text-center">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="business in filteredBusinesses track by $index">
+                                <td class="text-center fw-bold text-muted">{{ $index + 1 }}</td>
+                                <td>
+                                    <div class="fw-bold text-dark fs-6">{{ business.name || "-" }}</div>
+                                    <div class="mt-1" ng-if="business.website">
+                                        <a ng-href="{{ business.website }}" target="_blank" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none border border-primary border-opacity-25 px-2 py-1">
+                                            <i class="fas fa-external-link-alt me-1"></i>Web Sitesini Ziyaret Et
+                                        </a>
+                                    </div>
+                                    <div class="mt-1" ng-if="!business.website">
+                                        <span class="badge bg-light text-muted border px-2 py-1">Web Sitesi Yok</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="small text-secondary"><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ business.address || "-" }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark px-2 py-1 fw-bold" ng-if="business.rating">
+                                        ★ {{ business.rating }}
+                                        <span class="text-muted fw-normal" ng-if="business.reviews_count">({{ business.reviews_count }})</span>
+                                    </span>
+                                    <span class="text-muted small" ng-if="!business.rating">-</span>
+                                </td>
+                                <td>
+                                    <div ng-if="business.phone">
+                                        <a ng-href="tel:{{ business.phone }}" class="text-decoration-none text-dark fw-semibold small">
+                                            <i class="fas fa-phone-alt text-success me-1"></i>{{ business.phone }}
+                                        </a>
+                                    </div>
+                                    <div class="small text-muted" ng-if="business.phones.length > 1">
+                                        <span class="badge bg-light text-secondary border">+{{ business.phones.length - 1 }} ek numara</span>
+                                    </div>
+                                    <span class="text-muted small" ng-if="!business.phone">-</span>
+                                </td>
+                                <td>
+                                    <div ng-if="business.email">
+                                        <a ng-href="mailto:{{ business.email }}" class="text-decoration-none text-primary small fw-semibold">
+                                            <i class="fas fa-envelope text-primary me-1"></i>{{ business.email }}
+                                        </a>
+                                    </div>
+                                    <div class="small text-muted" ng-if="business.emails.length > 1">
+                                        <span class="badge bg-light text-secondary border">+{{ business.emails.length - 1 }} ek e-posta</span>
+                                    </div>
+                                    <span class="text-muted small" ng-if="!business.email">-</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1 flex-wrap align-items-center">
+                                        <a ng-if="business.whatsapp" ng-href="{{ business.whatsapp }}" target="_blank" class="social-icon-btn social-whatsapp" title="WhatsApp ile İletişime Geç">
+                                            <i class="fab fa-whatsapp"></i>
+                                        </a>
+                                        <a ng-if="business.social_links.instagram" ng-href="{{ business.social_links.instagram }}" target="_blank" class="social-icon-btn social-instagram" title="Instagram">
+                                            <i class="fab fa-instagram"></i>
+                                        </a>
+                                        <a ng-if="business.social_links.facebook" ng-href="{{ business.social_links.facebook }}" target="_blank" class="social-icon-btn social-facebook" title="Facebook">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </a>
+                                        <a ng-if="business.social_links.linkedin" ng-href="{{ business.social_links.linkedin }}" target="_blank" class="social-icon-btn social-linkedin" title="LinkedIn">
+                                            <i class="fab fa-linkedin-in"></i>
+                                        </a>
+                                        <a ng-if="business.social_links.twitter" ng-href="{{ business.social_links.twitter }}" target="_blank" class="social-icon-btn social-twitter" title="X / Twitter">
+                                            <i class="fab fa-x-twitter"></i>
+                                        </a>
+                                        <span class="text-muted small" ng-if="!business.whatsapp && (!business.social_links || (business.social_links | json) === '{}')">-</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary btn-sm rounded-circle p-1 me-1" style="width: 32px; height: 32px;" ng-click="highlightMarker($index)" title="Haritada Odakla">
+                                            <i class="fas fa-location-arrow"></i>
                                         </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        <button class="btn btn-outline-secondary btn-sm rounded-circle p-1" style="width: 32px; height: 32px;" ng-click="openDetailModal(business)" title="Tüm İletişim Detayları">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="businessDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" ng-if="selectedBusiness">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">{{ selectedBusiness.name }}</h5>
+                    <small class="text-white text-opacity-75"><i class="fas fa-map-pin me-1"></i>{{ selectedBusiness.address }}</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6" ng-if="selectedBusiness.website">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-globe text-primary me-2"></i>Web Sitesi</h6>
+                            <a ng-href="{{ selectedBusiness.website }}" target="_blank" class="text-primary fw-semibold text-break text-decoration-none">
+                                {{ selectedBusiness.website }} <i class="fas fa-external-link-alt ms-1 small"></i>
+                            </a>
+                            <div class="mt-2">
+                                <span class="badge bg-success" ng-if="selectedBusiness.website_status === 'active'"><i class="fas fa-check-circle me-1"></i>Web Sitesi Yayında</span>
+                                <span class="badge bg-secondary" ng-if="selectedBusiness.website_status !== 'active'">Durum: {{ selectedBusiness.website_status }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6" ng-if="selectedBusiness.whatsapp">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Hattı</h6>
+                            <a ng-href="{{ selectedBusiness.whatsapp }}" target="_blank" class="btn btn-success btn-sm text-white fw-semibold rounded-3 px-3">
+                                <i class="fab fa-whatsapp me-1"></i>WhatsApp ile Mesaj Gönder
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-12" ng-if="selectedBusiness.emails.length > 0">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-envelope text-primary me-2"></i>Tespit Edilen E-Posta Adresleri</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a ng-repeat="em in selectedBusiness.emails" ng-href="mailto:{{ em }}" class="badge bg-white text-dark border p-2 text-decoration-none shadow-sm">
+                                    <i class="fas fa-envelope text-primary me-1"></i>{{ em }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12" ng-if="selectedBusiness.phones.length > 0">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-phone-alt text-success me-2"></i>Tespit Edilen Telefon Numaraları</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a ng-repeat="ph in selectedBusiness.phones" ng-href="tel:{{ ph }}" class="badge bg-white text-dark border p-2 text-decoration-none shadow-sm">
+                                    <i class="fas fa-phone-volume text-success me-1"></i>{{ ph }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12" ng-if="selectedBusiness.social_links && (selectedBusiness.social_links | json) !== '{}'">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="fas fa-share-nodes text-danger me-2"></i>Sosyal Medya Profilleri</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a ng-if="selectedBusiness.social_links.instagram" ng-href="{{ selectedBusiness.social_links.instagram }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-3">
+                                    <i class="fab fa-instagram me-1"></i>Instagram
+                                </a>
+                                <a ng-if="selectedBusiness.social_links.facebook" ng-href="{{ selectedBusiness.social_links.facebook }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-3">
+                                    <i class="fab fa-facebook-f me-1"></i>Facebook
+                                </a>
+                                <a ng-if="selectedBusiness.social_links.linkedin" ng-href="{{ selectedBusiness.social_links.linkedin }}" target="_blank" class="btn btn-sm btn-outline-info rounded-3">
+                                    <i class="fab fa-linkedin-in me-1"></i>LinkedIn
+                                </a>
+                                <a ng-if="selectedBusiness.social_links.twitter" ng-href="{{ selectedBusiness.social_links.twitter }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-3">
+                                    <i class="fab fa-x-twitter me-1"></i>Twitter / X
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="modal-footer bg-light rounded-bottom">
+                <a ng-if="selectedBusiness.website" ng-href="{{ selectedBusiness.website }}" target="_blank" class="btn btn-primary btn-sm rounded-3">
+                    <i class="fas fa-external-link-alt me-1"></i>Web Sitesine Git
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm rounded-3" data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
     </div>

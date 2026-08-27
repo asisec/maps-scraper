@@ -70,19 +70,25 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 25px;">#</th>
-                <th style="width: 130px;">İşletme Adı</th>
+                <th style="width: 20px;">#</th>
+                <th style="width: 120px;">İşletme Adı</th>
                 <th>Açık Adres</th>
-                <th style="width: 50px;">Puan</th>
+                <th style="width: 45px;">Puan</th>
                 <th style="width: 75px;">Telefon</th>
-                <th style="width: 110px;">E-posta</th>
+                <th style="width: 100px;">E-posta</th>
+                <th style="width: 100px;">Web Sitesi</th>
             </tr>
         </thead>
         <tbody>
             @forelse($businesses as $index => $business)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td><strong>{{ $business->name }}</strong></td>
+                <td>
+                    <strong>{{ $business->name }}</strong>
+                    @if(!empty($business->whatsapp))
+                        <br><small style="color: #2e7d32;">WA: {{ $business->whatsapp }}</small>
+                    @endif
+                </td>
                 <td>{{ $business->address ?? '-' }}</td>
                 <td>
                     @if($business->rating)
@@ -96,10 +102,17 @@
                 </td>
                 <td>{{ $business->phone ?? '-' }}</td>
                 <td>{{ $business->email ?? '-' }}</td>
+                <td>
+                    @if(!empty($business->website))
+                        <span style="color: #1976D2;">{{ $business->website }}</span>
+                    @else
+                        -
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px;">Kayıtlı işletme bulunamadı.</td>
+                <td colspan="7" style="text-align: center; padding: 20px;">Kayıtlı işletme bulunamadı.</td>
             </tr>
             @endforelse
         </tbody>

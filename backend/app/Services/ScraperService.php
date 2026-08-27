@@ -44,10 +44,34 @@ class ScraperService
             $savedBusinesses = [];
 
             foreach ($scrapedItems as $item) {
-                $email = $item['email'] ?? null;
-                if (empty($email) && !empty($item['website'])) {
-                    $email = $this->extractEmailFromWebsite($item['website']);
+                $website = $item['website'] ?? null;
+                $city = $item['city'] ?? 'Turkiye';
+
+                if (empty($website)) {
+                    $website = $this->discoverBusinessWebsite($item['name'], $city);
                 }
+
+                $crawlData = [
+                    'emails' => !empty($item['email']) ? [$item['email']] : [],
+                    'phones' => !empty($item['phone']) ? [$item['phone']] : [],
+                    'whatsapp' => null,
+                    'social_links' => [],
+                    'website_status' => 'none',
+                ];
+
+                if (!empty($website)) {
+                    $crawled = $this->crawlWebsiteDetails($website);
+                    if (!empty($crawled)) {
+                        $crawlData['emails'] = array_values(array_unique(array_merge($crawlData['emails'], $crawled['emails'] ?? [])));
+                        $crawlData['phones'] = array_values(array_unique(array_merge($crawlData['phones'], $crawled['phones'] ?? [])));
+                        $crawlData['whatsapp'] = $crawled['whatsapp'] ?? null;
+                        $crawlData['social_links'] = $crawled['social_links'] ?? [];
+                        $crawlData['website_status'] = $crawled['website_status'] ?? 'active';
+                    }
+                }
+
+                $primaryEmail = !empty($crawlData['emails']) ? $crawlData['emails'][0] : ($item['email'] ?? null);
+                $primaryPhone = !empty($crawlData['phones']) ? $crawlData['phones'][0] : ($item['phone'] ?? null);
 
                 $business = Business::updateOrCreate(
                     [
@@ -59,9 +83,14 @@ class ScraperService
                         'address' => $item['address'] ?? null,
                         'rating' => isset($item['rating']) ? (float) $item['rating'] : null,
                         'reviews_count' => isset($item['reviews_count']) ? (int) $item['reviews_count'] : null,
-                        'phone' => $item['phone'] ?? null,
-                        'email' => $email,
-                        'website' => $item['website'] ?? null,
+                        'phone' => $primaryPhone,
+                        'phones' => $crawlData['phones'],
+                        'email' => $primaryEmail,
+                        'emails' => $crawlData['emails'],
+                        'website' => $website,
+                        'website_status' => $crawlData['website_status'],
+                        'whatsapp' => $crawlData['whatsapp'],
+                        'social_links' => $crawlData['social_links'],
                         'place_id' => $item['place_id'] ?? null,
                         'scrape_job_id' => (string) $job->_id,
                     ]
@@ -193,6 +222,7 @@ class ScraperService
             $results[] = [
                 'name' => $name,
                 'address' => $address,
+                'city' => !empty($city) ? $city : (!empty($district) ? $district : 'Turkiye'),
                 'rating' => $rating,
                 'reviews_count' => $reviewsCount,
                 'phone' => $phone,
@@ -246,6 +276,7 @@ class ScraperService
                         $results[] = [
                             'name' => $name,
                             'address' => $item['display_name'] ?? ("Konum: " . round($lat, 4) . ", " . round($lng, 4)),
+                            'city' => $item['address']['city'] ?? ($item['address']['town'] ?? 'Turkiye'),
                             'rating' => round(3.8 + (($nameHash % 12) / 10), 1),
                             'reviews_count' => 10 + ($nameHash % 150),
                             'phone' => $extra['phone'] ?? ($extra['contact:phone'] ?? null),
@@ -265,31 +296,234 @@ class ScraperService
         return $results;
     }
 
-    protected function extractEmailFromWebsite(string $url): ?string
+    public function crawlWebsiteDetails(string $url): array
     {
-        try {
-            if (!preg_match('/^https?:\/\//i', $url)) {
-                $url = 'http://' . $url;
-            }
+        $normalizedUrl = $this->normalizeUrl($url);
+        if (empty($normalizedUrl)) {
+            return ['website_status' => 'unreachable', 'emails' => [], 'phones' => [], 'social_links' => []];
+        }
 
-            $response = Http::withHeaders(['User-Agent' => $this->userAgent])
-                ->timeout(4)
-                ->get($url);
+        $emails = [];
+        $phones = [];
+        $socialLinks = [];
+        $whatsapp = null;
+        $status = 'unreachable';
+
+        $pagesToCrawl = [$normalizedUrl];
+
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => $this->userAgent,
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ])->timeout(6)->get($normalizedUrl);
 
             if ($response->successful()) {
+                $status = 'active';
                 $html = $response->body();
-                // TODO: Update email extraction pattern if obfuscated mail links or cloudflare email protection are encountered
-                if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $html, $matches)) {
-                    $found = strtolower($matches[0]);
-                    if (!preg_match('/\.(png|jpg|jpeg|gif|svg|webp|css|js)$/i', $found)) {
-                        return $found;
+
+                $extracted = $this->extractContactDataFromHtml($html, $normalizedUrl);
+                $emails = array_merge($emails, $extracted['emails']);
+                $phones = array_merge($phones, $extracted['phones']);
+                $socialLinks = array_merge($socialLinks, $extracted['social_links']);
+                if (!empty($extracted['whatsapp'])) {
+                    $whatsapp = $extracted['whatsapp'];
+                }
+
+                $internalContactLinks = $this->findInternalContactLinks($html, $normalizedUrl);
+                foreach (array_slice($internalContactLinks, 0, 2) as $contactPageUrl) {
+                    try {
+                        $contactResp = Http::withHeaders([
+                            'User-Agent' => $this->userAgent,
+                        ])->timeout(4)->get($contactPageUrl);
+
+                        if ($contactResp->successful()) {
+                            $contactHtml = $contactResp->body();
+                            $subExtracted = $this->extractContactDataFromHtml($contactHtml, $normalizedUrl);
+                            $emails = array_merge($emails, $subExtracted['emails']);
+                            $phones = array_merge($phones, $subExtracted['phones']);
+                            $socialLinks = array_merge($socialLinks, $subExtracted['social_links']);
+                            if (empty($whatsapp) && !empty($subExtracted['whatsapp'])) {
+                                $whatsapp = $subExtracted['whatsapp'];
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        Log::debug('Contact subpage error: ' . $e->getMessage());
                     }
                 }
             }
         } catch (\Throwable $e) {
-            Log::debug('Email extraction skipped: ' . $e->getMessage());
+            Log::debug('Website crawling error: ' . $e->getMessage());
+        }
+
+        return [
+            'website_status' => $status,
+            'emails' => array_values(array_unique($emails)),
+            'phones' => array_values(array_unique($phones)),
+            'whatsapp' => $whatsapp,
+            'social_links' => $socialLinks,
+        ];
+    }
+
+    protected function extractContactDataFromHtml(string $html, string $baseUrl): array
+    {
+        $emails = [];
+        $phones = [];
+        $socialLinks = [];
+        $whatsapp = null;
+
+        // TODO: Update email extraction pattern if obfuscated mail links or cloudflare email protection are encountered
+        if (preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $html, $matches)) {
+            foreach ($matches[0] as $match) {
+                $clean = strtolower(trim($match));
+                if (!preg_match('/\.(png|jpg|jpeg|gif|svg|webp|css|js|woff|woff2|ttf|eot)$/i', $clean)) {
+                    $emails[] = $clean;
+                }
+            }
+        }
+
+        // TODO: Update phone extraction pattern if non-standard international prefixes are required
+        if (preg_match_all('/(?:tel:|telefon:\s*|tel:\s*)?((?:\+?90\s*|0)?(?:\d{3}|\(\d{3}\))\s*\d{3}\s*\d{2}\s*\d{2}|\b0850\s*\d{3}\s*\d{2}\s*\d{2}\b|\b444\s*\d{1}\s*\d{3}\b)/i', $html, $matches)) {
+            foreach ($matches[1] as $match) {
+                $cleanPhone = preg_replace('/[^\d+]/', '', trim($match));
+                if (strlen($cleanPhone) >= 7 && strlen($cleanPhone) <= 14) {
+                    $phones[] = trim($match);
+                }
+            }
+        }
+
+        if (preg_match('/(?:href=[\'"])(?:https?:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?phone=))([\d+]+)/i', $html, $matches)) {
+            $whatsapp = 'https://wa.me/' . preg_replace('/[^\d]/', '', $matches[1]);
+        }
+
+        if (preg_match('/href=[\'"](https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9._\-]+)/i', $html, $matches)) {
+            if (!str_contains($matches[1], '/p/') && !str_contains($matches[1], '/explore/')) {
+                $socialLinks['instagram'] = $matches[1];
+            }
+        }
+
+        if (preg_match('/href=[\'"](https?:\/\/(?:www\.)?facebook\.com\/[a-zA-Z0-9._\-]+)/i', $html, $matches)) {
+            if (!str_contains($matches[1], '/sharer')) {
+                $socialLinks['facebook'] = $matches[1];
+            }
+        }
+
+        if (preg_match('/href=[\'"](https?:\/\/(?:www\.)?linkedin\.com\/(?:company|in)\/[a-zA-Z0-9._\-]+)/i', $html, $matches)) {
+            $socialLinks['linkedin'] = $matches[1];
+        }
+
+        if (preg_match('/href=[\'"](https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[a-zA-Z0-9._\-]+)/i', $html, $matches)) {
+            if (!str_contains($matches[1], '/intent/')) {
+                $socialLinks['twitter'] = $matches[1];
+            }
+        }
+
+        if (preg_match('/href=[\'"](https?:\/\/(?:www\.)?youtube\.com\/(?:channel|c|@)[a-zA-Z0-9._\-]+)/i', $html, $matches)) {
+            $socialLinks['youtube'] = $matches[1];
+        }
+
+        return [
+            'emails' => array_values(array_unique($emails)),
+            'phones' => array_values(array_unique($phones)),
+            'whatsapp' => $whatsapp,
+            'social_links' => $socialLinks,
+        ];
+    }
+
+    protected function findInternalContactLinks(string $html, string $baseUrl): array
+    {
+        $contactLinks = [];
+        $parsed = parse_url($baseUrl);
+        $domain = ($parsed['scheme'] ?? 'http') . '://' . ($parsed['host'] ?? '');
+
+        // TODO: Update slug list if multi-lingual contact URLs are encountered
+        $slugs = ['iletisim', 'contact', 'hakkimizda', 'about', 'bize-ulasin', 'iletisim-bilgileri'];
+
+        if (preg_match_all('/href=[\'"]([^\'"]+)[\'"]/i', $html, $matches)) {
+            foreach ($matches[1] as $href) {
+                foreach ($slugs as $slug) {
+                    if (stripos($href, $slug) !== false) {
+                        if (str_starts_with($href, 'http')) {
+                            $contactLinks[] = $href;
+                        } elseif (str_starts_with($href, '/')) {
+                            $contactLinks[] = rtrim($domain, '/') . $href;
+                        } else {
+                            $contactLinks[] = rtrim($baseUrl, '/') . '/' . ltrim($href, '/');
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($contactLinks));
+    }
+
+    protected function discoverBusinessWebsite(string $name, string $city): ?string
+    {
+        try {
+            $searchQuery = urlencode("{$name} {$city} resmi web sitesi");
+            $response = Http::withHeaders([
+                'User-Agent' => $this->userAgent,
+                'Accept-Language' => 'tr-TR,tr;q=0.9,en-US;q=0.8',
+            ])->timeout(4)->get("https://html.duckduckgo.com/html/?q={$searchQuery}");
+
+            if ($response->successful()) {
+                $html = $response->body();
+                // TODO: Update search result link parsing if DuckDuckGo HTML layout changes
+                if (preg_match_all('/<a class="result__url"[^>]*href="([^"]+)"/i', $html, $matches)) {
+                    foreach ($matches[1] as $link) {
+                        $actualUrl = urldecode($link);
+                        if (preg_match('/uddg=([^&]+)/', $actualUrl, $uMatch)) {
+                            $actualUrl = urldecode($uMatch[1]);
+                        }
+                        if ($this->isValidBusinessDomain($actualUrl)) {
+                            return $actualUrl;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::debug('Website discovery skipped: ' . $e->getMessage());
         }
 
         return null;
+    }
+
+    protected function isValidBusinessDomain(string $url): bool
+    {
+        $ignored = [
+            'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'linkedin.com',
+            'youtube.com', 'google.com', 'yandex.com', 'wikipedia.org', 'tripadvisor.com',
+            'sahibinden.com', 'trendyol.com', 'hepsiburada.com', 'yemeksepeti.com',
+            'getir.com', 'foursquare.com', 'yellowpages.com.tr', 'bulurum.com',
+        ];
+
+        $host = parse_url($url, PHP_URL_HOST);
+        if (empty($host)) {
+            return false;
+        }
+
+        $host = strtolower($host);
+        foreach ($ignored as $ign) {
+            if (str_contains($host, $ign)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function normalizeUrl(string $url): ?string
+    {
+        $trimmed = trim($url);
+        if (empty($trimmed)) {
+            return null;
+        }
+
+        if (!preg_match('/^https?:\/\//i', $trimmed)) {
+            $trimmed = 'https://' . $trimmed;
+        }
+
+        return filter_var($trimmed, FILTER_VALIDATE_URL) ? $trimmed : null;
     }
 }

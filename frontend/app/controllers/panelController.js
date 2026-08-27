@@ -4,6 +4,17 @@ angular.module("mapsScraperApp").controller("PanelController", [
     "ScraperService",
     function ($scope, $timeout, ScraperService) {
         $scope.businesses = [];
+        $scope.filteredBusinesses = [];
+        $scope.stats = {
+            total: 0,
+            withWebsite: 0,
+            withEmail: 0,
+            withPhone: 0,
+            withSocial: 0,
+        };
+        $scope.searchQuery = "";
+        $scope.activeFilter = "all";
+        $scope.selectedBusiness = null;
         $scope.isLoading = false;
         $scope.errorMessage = null;
         $scope.successMessage = null;
@@ -68,8 +79,8 @@ angular.module("mapsScraperApp").controller("PanelController", [
             }
 
             $scope.circleLayer = L.circle([$scope.centerLat, $scope.centerLng], {
-                color: "#1976D2",
-                fillColor: "#1976D2",
+                color: "#4f46e5",
+                fillColor: "#6366f1",
                 fillOpacity: 0.2,
                 weight: 2,
                 radius: $scope.circleRadius,
@@ -77,7 +88,7 @@ angular.module("mapsScraperApp").controller("PanelController", [
 
             const centerIcon = L.divIcon({
                 className: "custom-center-marker",
-                html: '<div style="background-color:#1976D2; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>',
+                html: '<div style="background-color:#4f46e5; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>',
                 iconSize: [14, 14],
                 iconAnchor: [7, 7],
             });
@@ -115,7 +126,7 @@ angular.module("mapsScraperApp").controller("PanelController", [
             } else {
                 const handleIcon = L.divIcon({
                     className: "custom-radius-marker",
-                    html: '<div style="background-color:#F57C00; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.6); cursor:ew-resize;"></div>',
+                    html: '<div style="background-color:#f59e0b; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.6); cursor:ew-resize;"></div>',
                     iconSize: [12, 12],
                     iconAnchor: [6, 6],
                 });
@@ -163,6 +174,8 @@ angular.module("mapsScraperApp").controller("PanelController", [
             $scope.centerLng = null;
             $scope.hasSelectedArea = false;
             $scope.businesses = [];
+            $scope.filteredBusinesses = [];
+            $scope.updateStats();
             $scope.errorMessage = null;
             $scope.successMessage = null;
             $scope.currentJobId = null;
@@ -177,17 +190,11 @@ angular.module("mapsScraperApp").controller("PanelController", [
 
         $scope.renderBusinessMarkers = function () {
             $scope.clearBusinessMarkers();
-            if (!$scope.businesses || $scope.businesses.length === 0 || !$scope.map) {
+            if (!$scope.filteredBusinesses || $scope.filteredBusinesses.length === 0 || !$scope.map) {
                 return;
             }
 
-            const boundsGroup = [];
-
-            if ($scope.circleLayer) {
-                boundsGroup.push($scope.circleLayer.getBounds());
-            }
-
-            $scope.businesses.forEach(function (biz, idx) {
+            $scope.filteredBusinesses.forEach(function (biz, idx) {
                 if (biz.latitude && biz.longitude) {
                     const lat = parseFloat(biz.latitude);
                     const lng = parseFloat(biz.longitude);
@@ -199,19 +206,20 @@ angular.module("mapsScraperApp").controller("PanelController", [
                     const icon = L.divIcon({
                         className: "biz-pin-wrapper",
                         html: markerHtml,
-                        iconSize: [26, 26],
-                        iconAnchor: [13, 26],
-                        popupAnchor: [0, -26],
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 28],
+                        popupAnchor: [0, -28],
                     });
 
                     const marker = L.marker([lat, lng], { icon: icon }).addTo($scope.map);
 
-                    const popupContent = '<div style="min-width: 220px; font-family: sans-serif;">' +
-                        '<h6 style="margin: 0 0 5px 0; font-weight: bold; color: #1976D2; font-size: 13px;">' + biz.name + '</h6>' +
-                        '<p style="margin: 0 0 4px 0; font-size: 11px; color: #555;">' + (biz.address || "-") + '</p>' +
-                        (biz.phone ? '<p style="margin: 0 0 4px 0; font-size: 11px;"><strong>Tel:</strong> ' + biz.phone + '</p>' : '') +
-                        (biz.email ? '<p style="margin: 0 0 4px 0; font-size: 11px;"><strong>E-posta:</strong> ' + biz.email + '</p>' : '') +
-                        (biz.rating ? '<p style="margin: 0; font-size: 11px; color: #F57F17; font-weight: bold;">★ ' + biz.rating + (biz.reviews_count ? ' (' + biz.reviews_count + ')' : '') + '</p>' : '') +
+                    const popupContent = '<div style="min-width: 240px; font-family: sans-serif; padding: 4px;">' +
+                        '<h6 style="margin: 0 0 6px 0; font-weight: bold; color: #4f46e5; font-size: 14px;">' + biz.name + '</h6>' +
+                        '<p style="margin: 0 0 6px 0; font-size: 12px; color: #64748b;"><i class="fas fa-map-pin" style="color:#ef4444; margin-right:4px;"></i>' + (biz.address || "-") + '</p>' +
+                        (biz.phone ? '<p style="margin: 0 0 4px 0; font-size: 12px;"><strong>Tel:</strong> <a href="tel:' + biz.phone + '" style="color:#0f172a; text-decoration:none;">' + biz.phone + '</a></p>' : '') +
+                        (biz.email ? '<p style="margin: 0 0 4px 0; font-size: 12px;"><strong>E-posta:</strong> <a href="mailto:' + biz.email + '" style="color:#4f46e5; text-decoration:none;">' + biz.email + '</a></p>' : '') +
+                        (biz.website ? '<p style="margin: 0 0 4px 0; font-size: 12px;"><strong>Web:</strong> <a href="' + biz.website + '" target="_blank" style="color:#2563eb; font-weight:600;">Siteyi Ziyaret Et &rarr;</a></p>' : '') +
+                        (biz.rating ? '<p style="margin: 4px 0 0 0; font-size: 12px; color: #f59e0b; font-weight: bold;">★ ' + biz.rating + (biz.reviews_count ? ' (' + biz.reviews_count + ')' : '') + '</p>' : '') +
                         '</div>';
 
                     marker.bindPopup(popupContent);
@@ -221,6 +229,81 @@ angular.module("mapsScraperApp").controller("PanelController", [
 
             if ($scope.circleLayer) {
                 $scope.map.fitBounds($scope.circleLayer.getBounds(), { padding: [30, 30] });
+            }
+        };
+
+        $scope.updateStats = function () {
+            const list = $scope.businesses || [];
+            let withWeb = 0;
+            let withMail = 0;
+            let withPh = 0;
+            let withSoc = 0;
+
+            for (let i = 0; i < list.length; i++) {
+                const b = list[i];
+                if (b.website) {
+                    withWeb++;
+                }
+                if (b.email || (b.emails && b.emails.length > 0)) {
+                    withMail++;
+                }
+                if (b.phone || (b.phones && b.phones.length > 0)) {
+                    withPh++;
+                }
+                if (b.whatsapp || (b.social_links && Object.keys(b.social_links).length > 0)) {
+                    withSoc++;
+                }
+            }
+
+            $scope.stats = {
+                total: list.length,
+                withWebsite: withWeb,
+                withEmail: withMail,
+                withPhone: withPh,
+                withSocial: withSoc,
+            };
+        };
+
+        $scope.setFilter = function (filterType) {
+            $scope.activeFilter = filterType;
+            $scope.applyFilter();
+        };
+
+        $scope.applyFilter = function () {
+            let result = $scope.businesses || [];
+
+            if ($scope.activeFilter === "website") {
+                result = result.filter(function (b) { return !!b.website; });
+            } else if ($scope.activeFilter === "email") {
+                result = result.filter(function (b) { return !!b.email || (b.emails && b.emails.length > 0); });
+            } else if ($scope.activeFilter === "phone") {
+                result = result.filter(function (b) { return !!b.phone || (b.phones && b.phones.length > 0); });
+            }
+
+            if ($scope.searchQuery && $scope.searchQuery.trim() !== "") {
+                const q = $scope.searchQuery.toLowerCase().trim();
+                result = result.filter(function (b) {
+                    const name = (b.name || "").toLowerCase();
+                    const addr = (b.address || "").toLowerCase();
+                    const phone = (b.phone || "").toLowerCase();
+                    const email = (b.email || "").toLowerCase();
+                    const web = (b.website || "").toLowerCase();
+                    return name.includes(q) || addr.includes(q) || phone.includes(q) || email.includes(q) || web.includes(q);
+                });
+            }
+
+            $scope.filteredBusinesses = result;
+            $timeout(function () {
+                $scope.renderBusinessMarkers();
+            }, 50);
+        };
+
+        $scope.openDetailModal = function (business) {
+            $scope.selectedBusiness = business;
+            const modalEl = document.getElementById("businessDetailModal");
+            if (modalEl && window.bootstrap) {
+                const modal = new window.bootstrap.Modal(modalEl);
+                modal.show();
             }
         };
 
@@ -235,18 +318,17 @@ angular.module("mapsScraperApp").controller("PanelController", [
             $scope.errorMessage = null;
             $scope.successMessage = null;
             $scope.businesses = [];
+            $scope.filteredBusinesses = [];
 
             ScraperService.scrape($scope.centerLat, $scope.centerLng, $scope.circleRadius)
                 .then(function (response) {
                     $scope.businesses = response.data.data || [];
                     $scope.currentJobId = response.data.job_id || null;
+                    $scope.updateStats();
+                    $scope.applyFilter();
                     $scope.successMessage = ($scope.businesses.length > 0)
-                        ? ($scope.businesses.length + " adet işletme başarıyla tarandı ve listelendi.")
+                        ? ($scope.businesses.length + " adet işletme ve iletişim bilgileri başarıyla tarandı.")
                         : "Seçilen alanda işletme bulunamadı.";
-
-                    $timeout(function () {
-                        $scope.renderBusinessMarkers();
-                    }, 100);
                 })
                 .catch(function (error) {
                     $scope.errorMessage = (error.data && error.data.message)

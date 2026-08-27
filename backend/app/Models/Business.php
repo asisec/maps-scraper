@@ -15,8 +15,13 @@ class Business extends Model
         'rating',
         'reviews_count',
         'phone',
+        'phones',
         'email',
+        'emails',
         'website',
+        'website_status',
+        'whatsapp',
+        'social_links',
         'latitude',
         'longitude',
         'place_id',
@@ -28,6 +33,9 @@ class Business extends Model
         'reviews_count' => 'integer',
         'latitude' => 'float',
         'longitude' => 'float',
+        'phones' => 'array',
+        'emails' => 'array',
+        'social_links' => 'array',
     ];
 
     public function scrapeJob()
