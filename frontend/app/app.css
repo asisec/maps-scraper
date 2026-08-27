@@ -1,4 +1,4 @@
-﻿body {
+body {
     background-color: #f0f2f5;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -33,7 +33,7 @@
 }
 
 .btn-export {
-    min-width: 160px;
+    min-width: 150px;
     border-radius: 8px;
     font-weight: 600;
 }
@@ -54,8 +54,9 @@
 .spinner-container {
     background: #ffffff;
     padding: 40px;
-    border-radius: 12px;
+    border-radius: 16px;
     text-align: center;
+    max-width: 380px;
 }
 
 .alert-placeholder {
@@ -63,5 +64,32 @@
 }
 
 #map-canvas {
-    border-radius: 0 0 12px 12px;
+    height: 480px;
+    width: 100%;
+    z-index: 10;
+}
+
+.biz-map-pin {
+    background-color: #E53935;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 11px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.biz-map-pin span {
+    transform: rotate(45deg);
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.25);
 }

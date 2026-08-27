@@ -1,4 +1,4 @@
-﻿{
+{
     "env": {
         "browser": true,
         "es6": true
@@ -6,7 +6,8 @@
     "extends": "eslint:recommended",
     "globals": {
         "angular": "readonly",
-        "google": "readonly"
+        "google": "readonly",
+        "L": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2018

@@ -1,5 +1,6 @@
 angular.module("mapsScraperApp", ["ngRoute"])
-    .config(["$routeProvider", function ($routeProvider) {
+    .config(["$routeProvider", "$locationProvider", function ($routeProvider, $locationProvider) {
+        $locationProvider.hashPrefix("");
         $routeProvider
             .when("/panel", {
                 templateUrl: "app/views/panel.html",

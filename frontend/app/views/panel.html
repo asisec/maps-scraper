@@ -57,14 +57,20 @@
                         <h6 class="mb-0 fw-bold text-dark">Dairesel Tarama Alanı</h6>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge bg-light text-dark border px-3 py-2" ng-if="selectedCircle">
+                        <div class="btn-group btn-group-sm" role="group" ng-if="hasSelectedArea">
+                            <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 500, 'btn-outline-secondary': circleRadius !== 500}" ng-click="setRadiusPreset(500)">500m</button>
+                            <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 1000, 'btn-outline-secondary': circleRadius !== 1000}" ng-click="setRadiusPreset(1000)">1 km</button>
+                            <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 2000, 'btn-outline-secondary': circleRadius !== 2000}" ng-click="setRadiusPreset(2000)">2 km</button>
+                            <button type="button" class="btn" ng-class="{'btn-primary': circleRadius === 5000, 'btn-outline-secondary': circleRadius !== 5000}" ng-click="setRadiusPreset(5000)">5 km</button>
+                        </div>
+                        <span class="badge bg-light text-dark border px-3 py-2" ng-if="hasSelectedArea">
                             <i class="fas fa-crosshairs text-muted me-1"></i>
                             {{ centerLat }}, {{ centerLng }} | {{ circleRadius }} metre
                         </span>
-                        <button class="btn btn-outline-secondary btn-sm" ng-click="clearSelection()" ng-if="selectedCircle" ng-disabled="isLoading">
+                        <button class="btn btn-outline-secondary btn-sm" ng-click="clearSelection()" ng-if="hasSelectedArea" ng-disabled="isLoading">
                             <i class="fas fa-trash-alt me-1"></i>Alanı Temizle
                         </button>
-                        <button class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" ng-click="startScrape()" ng-disabled="isLoading || !selectedCircle">
+                        <button class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" ng-click="startScrape()" ng-disabled="isLoading || !hasSelectedArea">
                             <i class="fas fa-search me-1"></i>Taramayı Başlat
                         </button>
                     </div>
@@ -72,9 +78,9 @@
                 <div class="card-body p-0">
                     <div id="map-canvas" style="height: 480px; width: 100%;"></div>
                 </div>
-                <div class="card-footer bg-light py-2 text-muted small d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-info-circle me-1"></i>Harita üzerindeki daire çizme aracını kullanarak hedef bölgenizi seçiniz.</span>
-                    <span ng-if="selectedCircle"><i class="fas fa-arrows-alt me-1"></i>Dairenin kenarından tutarak yarıçapı değiştirebilirsiniz.</span>
+                <div class="card-footer bg-light py-2 text-muted small d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span><i class="fas fa-mouse-pointer text-primary me-1"></i>Haritada herhangi bir yere tıklayarak tarama merkezini belirleyebilirsiniz.</span>
+                    <span ng-if="hasSelectedArea"><i class="fas fa-arrows-alt text-warning me-1"></i>Mavi noktayı sürükleyerek merkezi, turuncu noktayı sürükleyerek yarıçapı değiştirebilirsiniz.</span>
                 </div>
             </div>
         </div>

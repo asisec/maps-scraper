@@ -7,177 +7,236 @@ angular.module("mapsScraperApp").controller("PanelController", [
         $scope.isLoading = false;
         $scope.errorMessage = null;
         $scope.successMessage = null;
-        $scope.selectedCircle = null;
-        $scope.mapInstance = null;
-        $scope.drawingManager = null;
-        $scope.markers = [];
-        $scope.infoWindow = null;
+        $scope.map = null;
+        $scope.circleLayer = null;
+        $scope.centerMarker = null;
+        $scope.radiusMarker = null;
+        $scope.businessMarkers = [];
         $scope.currentJobId = null;
         $scope.centerLat = null;
         $scope.centerLng = null;
-        $scope.circleRadius = null;
-        $scope.searchQuery = "";
+        $scope.circleRadius = 1000;
+        $scope.isDrawing = false;
+        $scope.hasSelectedArea = false;
 
         $scope.initMap = function () {
-            const defaultCenter = { lat: 39.9334, lng: 32.8597 };
-            const mapOptions = {
-                center: defaultCenter,
+            if ($scope.map) {
+                $scope.map.remove();
+            }
+
+            const defaultLat = 39.9334;
+            const defaultLng = 32.8597;
+
+            $scope.map = L.map("map-canvas", {
+                center: [defaultLat, defaultLng],
                 zoom: 13,
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                mapTypeControl: true,
-                streetViewControl: false,
-                fullscreenControl: true,
-            };
-
-            $scope.mapInstance = new google.maps.Map(
-                document.getElementById("map-canvas"),
-                mapOptions
-            );
-
-            $scope.infoWindow = new google.maps.InfoWindow();
-
-            $scope.drawingManager = new google.maps.drawing.DrawingManager({
-                drawingMode: google.maps.drawing.OverlayType.CIRCLE,
-                drawingControl: true,
-                drawingControlOptions: {
-                    position: google.maps.ControlPosition.TOP_CENTER,
-                    drawingModes: [google.maps.drawing.OverlayType.CIRCLE],
-                },
-                circleOptions: {
-                    fillColor: "#1976D2",
-                    fillOpacity: 0.2,
-                    strokeWeight: 2,
-                    strokeColor: "#1976D2",
-                    clickable: false,
-                    editable: true,
-                    zIndex: 1,
-                },
+                zoomControl: true,
             });
 
-            $scope.drawingManager.setMap($scope.mapInstance);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo($scope.map);
 
-            google.maps.event.addListener(
-                $scope.drawingManager,
-                "circlecomplete",
-                function (circle) {
-                    if ($scope.selectedCircle) {
-                        $scope.selectedCircle.setMap(null);
-                    }
-                    $scope.selectedCircle = circle;
-                    $scope.drawingManager.setDrawingMode(null);
+            $scope.map.on("click", function (e) {
+                $scope.$apply(function () {
+                    $scope.createCircleAt(e.latlng.lat, e.latlng.lng, $scope.circleRadius || 1000);
+                });
+            });
 
-                    $scope.updateCircleStats();
-
-                    google.maps.event.addListener(circle, "radius_changed", function () {
-                        $scope.$apply(function () {
-                            $scope.updateCircleStats();
-                        });
-                    });
-
-                    google.maps.event.addListener(circle, "center_changed", function () {
-                        $scope.$apply(function () {
-                            $scope.updateCircleStats();
-                        });
-                    });
-
-                    $scope.$apply();
-                }
-            );
+            $timeout(function () {
+                $scope.map.invalidateSize();
+                $scope.createCircleAt(defaultLat, defaultLng, 1000);
+            }, 250);
         };
 
-        $scope.updateCircleStats = function () {
-            if (!$scope.selectedCircle) {
+        $scope.createCircleAt = function (lat, lng, radius) {
+            $scope.centerLat = parseFloat(lat.toFixed(6));
+            $scope.centerLng = parseFloat(lng.toFixed(6));
+            $scope.circleRadius = Math.round(radius);
+            $scope.hasSelectedArea = true;
+            $scope.errorMessage = null;
+
+            if ($scope.circleLayer) {
+                $scope.map.removeLayer($scope.circleLayer);
+            }
+            if ($scope.centerMarker) {
+                $scope.map.removeLayer($scope.centerMarker);
+            }
+            if ($scope.radiusMarker) {
+                $scope.map.removeLayer($scope.radiusMarker);
+            }
+
+            $scope.circleLayer = L.circle([$scope.centerLat, $scope.centerLng], {
+                color: "#1976D2",
+                fillColor: "#1976D2",
+                fillOpacity: 0.2,
+                weight: 2,
+                radius: $scope.circleRadius,
+            }).addTo($scope.map);
+
+            const centerIcon = L.divIcon({
+                className: "custom-center-marker",
+                html: '<div style="background-color:#1976D2; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+            });
+
+            $scope.centerMarker = L.marker([$scope.centerLat, $scope.centerLng], {
+                icon: centerIcon,
+                draggable: true,
+            }).addTo($scope.map);
+
+            $scope.centerMarker.on("drag", function (e) {
+                $scope.$apply(function () {
+                    const newPos = e.target.getLatLng();
+                    $scope.centerLat = parseFloat(newPos.lat.toFixed(6));
+                    $scope.centerLng = parseFloat(newPos.lng.toFixed(6));
+                    $scope.circleLayer.setLatLng(newPos);
+                    $scope.updateRadiusMarkerPosition();
+                });
+            });
+
+            $scope.updateRadiusMarkerPosition();
+        };
+
+        $scope.updateRadiusMarkerPosition = function () {
+            if (!$scope.centerLat || !$scope.centerLng || !$scope.circleRadius) {
                 return;
             }
-            const center = $scope.selectedCircle.getCenter();
-            $scope.centerLat = center.lat().toFixed(6);
-            $scope.centerLng = center.lng().toFixed(6);
-            $scope.circleRadius = Math.round($scope.selectedCircle.getRadius());
+
+            const earthRadius = 6378137;
+            const dLat = 0;
+            const dLng = ($scope.circleRadius / (earthRadius * Math.cos(Math.PI * $scope.centerLat / 180))) * (180 / Math.PI);
+            const edgePos = L.latLng($scope.centerLat + dLat, $scope.centerLng + dLng);
+
+            if ($scope.radiusMarker) {
+                $scope.radiusMarker.setLatLng(edgePos);
+            } else {
+                const handleIcon = L.divIcon({
+                    className: "custom-radius-marker",
+                    html: '<div style="background-color:#F57C00; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 3px rgba(0,0,0,0.6); cursor:ew-resize;"></div>',
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6],
+                });
+
+                $scope.radiusMarker = L.marker(edgePos, {
+                    icon: handleIcon,
+                    draggable: true,
+                }).addTo($scope.map);
+
+                $scope.radiusMarker.on("drag", function (e) {
+                    $scope.$apply(function () {
+                        const newEdgePos = e.target.getLatLng();
+                        const centerPos = L.latLng($scope.centerLat, $scope.centerLng);
+                        const newRadius = centerPos.distanceTo(newEdgePos);
+                        $scope.circleRadius = Math.max(50, Math.round(newRadius));
+                        $scope.circleLayer.setRadius($scope.circleRadius);
+                    });
+                });
+            }
+        };
+
+        $scope.setRadiusPreset = function (radiusMeters) {
+            $scope.circleRadius = radiusMeters;
+            if ($scope.circleLayer) {
+                $scope.circleLayer.setRadius(radiusMeters);
+                $scope.updateRadiusMarkerPosition();
+            }
         };
 
         $scope.clearSelection = function () {
-            if ($scope.selectedCircle) {
-                $scope.selectedCircle.setMap(null);
-                $scope.selectedCircle = null;
+            if ($scope.circleLayer) {
+                $scope.map.removeLayer($scope.circleLayer);
+                $scope.circleLayer = null;
             }
-            $scope.clearMarkers();
+            if ($scope.centerMarker) {
+                $scope.map.removeLayer($scope.centerMarker);
+                $scope.centerMarker = null;
+            }
+            if ($scope.radiusMarker) {
+                $scope.map.removeLayer($scope.radiusMarker);
+                $scope.radiusMarker = null;
+            }
+            $scope.clearBusinessMarkers();
             $scope.centerLat = null;
             $scope.centerLng = null;
-            $scope.circleRadius = null;
+            $scope.hasSelectedArea = false;
             $scope.businesses = [];
             $scope.errorMessage = null;
             $scope.successMessage = null;
             $scope.currentJobId = null;
-
-            if ($scope.drawingManager) {
-                $scope.drawingManager.setDrawingMode(google.maps.drawing.OverlayType.CIRCLE);
-            }
         };
 
-        $scope.clearMarkers = function () {
-            for (let i = 0; i < $scope.markers.length; i++) {
-                $scope.markers[i].setMap(null);
+        $scope.clearBusinessMarkers = function () {
+            for (let i = 0; i < $scope.businessMarkers.length; i++) {
+                $scope.map.removeLayer($scope.businessMarkers[i]);
             }
-            $scope.markers = [];
+            $scope.businessMarkers = [];
         };
 
-        $scope.renderMarkers = function () {
-            $scope.clearMarkers();
-            if (!$scope.businesses || $scope.businesses.length === 0 || !$scope.mapInstance) {
+        $scope.renderBusinessMarkers = function () {
+            $scope.clearBusinessMarkers();
+            if (!$scope.businesses || $scope.businesses.length === 0 || !$scope.map) {
                 return;
             }
 
-            const bounds = new google.maps.LatLngBounds();
+            const boundsGroup = [];
+
+            if ($scope.circleLayer) {
+                boundsGroup.push($scope.circleLayer.getBounds());
+            }
 
             $scope.businesses.forEach(function (biz, idx) {
                 if (biz.latitude && biz.longitude) {
-                    const position = { lat: parseFloat(biz.latitude), lng: parseFloat(biz.longitude) };
-                    const marker = new google.maps.Marker({
-                        position: position,
-                        map: $scope.mapInstance,
-                        title: biz.name,
-                        label: (idx + 1).toString(),
-                        animation: google.maps.Animation.DROP,
+                    const lat = parseFloat(biz.latitude);
+                    const lng = parseFloat(biz.longitude);
+
+                    const markerHtml = '<div class="biz-map-pin">' +
+                        '<span>' + (idx + 1) + '</span>' +
+                        '</div>';
+
+                    const icon = L.divIcon({
+                        className: "biz-pin-wrapper",
+                        html: markerHtml,
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 26],
+                        popupAnchor: [0, -26],
                     });
 
-                    marker.addListener("click", function () {
-                        const content = "<div style=\"padding: 8px; max-width: 250px;\">" +
-                            "<h6 style=\"margin: 0 0 5px 0; font-weight: bold; color: #1976D2;\">" + biz.name + "</h6>" +
-                            "<p style=\"margin: 0 0 5px 0; font-size: 12px; color: #555;\">" + (biz.address || "-") + "</p>" +
-                            "<p style=\"margin: 0; font-size: 12px;\"><strong>Telefon:</strong> " + (biz.phone || "-") + "</p>" +
-                            (biz.rating ? "<p style=\"margin: 3px 0 0 0; color: #f57f17; font-weight: bold;\">★ " + biz.rating + "</p>" : "") +
-                            "</div>";
+                    const marker = L.marker([lat, lng], { icon: icon }).addTo($scope.map);
 
-                        $scope.infoWindow.setContent(content);
-                        $scope.infoWindow.open($scope.mapInstance, marker);
-                    });
+                    const popupContent = '<div style="min-width: 220px; font-family: sans-serif;">' +
+                        '<h6 style="margin: 0 0 5px 0; font-weight: bold; color: #1976D2; font-size: 13px;">' + biz.name + '</h6>' +
+                        '<p style="margin: 0 0 4px 0; font-size: 11px; color: #555;">' + (biz.address || "-") + '</p>' +
+                        (biz.phone ? '<p style="margin: 0 0 4px 0; font-size: 11px;"><strong>Tel:</strong> ' + biz.phone + '</p>' : '') +
+                        (biz.email ? '<p style="margin: 0 0 4px 0; font-size: 11px;"><strong>E-posta:</strong> ' + biz.email + '</p>' : '') +
+                        (biz.rating ? '<p style="margin: 0; font-size: 11px; color: #F57F17; font-weight: bold;">★ ' + biz.rating + (biz.reviews_count ? ' (' + biz.reviews_count + ')' : '') + '</p>' : '') +
+                        '</div>';
 
-                    $scope.markers.push(marker);
-                    bounds.extend(position);
+                    marker.bindPopup(popupContent);
+                    $scope.businessMarkers.push(marker);
                 }
             });
 
-            if ($scope.markers.length > 0) {
-                $scope.mapInstance.fitBounds(bounds);
+            if ($scope.circleLayer) {
+                $scope.map.fitBounds($scope.circleLayer.getBounds(), { padding: [30, 30] });
             }
         };
 
         $scope.startScrape = function () {
-            if (!$scope.selectedCircle) {
-                $scope.errorMessage = "Lütfen harita üzerinde dairesel bir tarama alanı çizin.";
+            if (!$scope.hasSelectedArea || !$scope.centerLat || !$scope.centerLng || !$scope.circleRadius) {
+                $scope.errorMessage = "Lütfen harita üzerinde tıklayarak bir tarama alanı seçin.";
                 $scope.successMessage = null;
                 return;
             }
-
-            const center = $scope.selectedCircle.getCenter();
-            const radius = Math.round($scope.selectedCircle.getRadius());
 
             $scope.isLoading = true;
             $scope.errorMessage = null;
             $scope.successMessage = null;
             $scope.businesses = [];
 
-            ScraperService.scrape(center.lat(), center.lng(), radius)
+            ScraperService.scrape($scope.centerLat, $scope.centerLng, $scope.circleRadius)
                 .then(function (response) {
                     $scope.businesses = response.data.data || [];
                     $scope.currentJobId = response.data.job_id || null;
@@ -186,7 +245,7 @@ angular.module("mapsScraperApp").controller("PanelController", [
                         : "Seçilen alanda işletme bulunamadı.";
 
                     $timeout(function () {
-                        $scope.renderMarkers();
+                        $scope.renderBusinessMarkers();
                     }, 100);
                 })
                 .catch(function (error) {
@@ -212,22 +271,15 @@ angular.module("mapsScraperApp").controller("PanelController", [
         };
 
         $scope.highlightMarker = function (index) {
-            if ($scope.markers[index]) {
-                google.maps.event.trigger($scope.markers[index], "click");
-                $scope.mapInstance.panTo($scope.markers[index].getPosition());
+            if ($scope.businessMarkers[index]) {
+                const marker = $scope.businessMarkers[index];
+                $scope.map.setView(marker.getLatLng(), 16);
+                marker.openPopup();
             }
         };
 
         angular.element(document).ready(function () {
-            if (typeof google !== "undefined" && typeof google.maps !== "undefined") {
-                $scope.initMap();
-            } else {
-                window.initGoogleMaps = function () {
-                    $scope.$apply(function () {
-                        $scope.initMap();
-                    });
-                };
-            }
+            $scope.initMap();
         });
     },
 ]);
