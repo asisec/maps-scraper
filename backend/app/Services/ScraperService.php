@@ -102,7 +102,7 @@ class ScraperService
         $radiusMeters = max(100, min(50000, $radius));
 
         // TODO: Update Overpass query filters if additional place categories or custom tags are requested
-        $query = "[out:json][timeout:{$this->timeout}];(node[\"name\"](around:{$radiusMeters},{$latitude},{$longitude});way[\"name\"](around:{$radiusMeters},{$latitude},{$longitude}););out center tags " . ($this->maxResults * 2) . ";";
+        $query = "[out:json][timeout:{$this->timeout}];(nwr[\"amenity\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude});nwr[\"shop\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude});nwr[\"office\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude});nwr[\"tourism\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude});nwr[\"healthcare\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude});nwr[\"craft\"][\"name\"](around:{$radiusMeters},{$latitude},{$longitude}););out center tags " . ($this->maxResults * 2) . ";";
 
         $response = $this->queryOverpassMirrors($query);
 
