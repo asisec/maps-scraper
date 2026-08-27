@@ -1,141 +1,176 @@
-﻿# Harita Kaziyici
+# Harita Kazıyıcı (Maps Scraper)
 
-Belirli bir cografik alan icindeki Google Haritalar isletme verilerini kaziyarak XLSX, PDF ve Gorsel formatlarinda disa aktaran web uygulamasi.
+Belirli bir coğrafi koordinat ve yarıçap alanı içindeki Google Haritalar işletme verilerini (İşletme Adı, Açık Adres, Ortalama Puan, Telefon, E-posta, Web Sitesi) ücretli Places API kullanmadan kazıyan ve toplanan verileri **Excel (XLSX)**, **PDF** ve **Resim (PNG)** formatlarında dışa aktaran web uygulaması.
 
-## Teknoloji Altyapisi
+---
 
-| Katman | Teknoloji |
-|---|---|
-| Arka Yuz | PHP Laravel 12 |
-| On Yuz | AngularJS 1.8 |
-| Veritabani | MongoDB 7.0 |
-| Konteyner | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
-| API Dokumantasyonu | Swagger UI |
+## 🚀 Teknoloji Mimarisi
 
-## Hizli Baslangic
+| Katman | Teknoloji / Kütüphane | Açıklama |
+|---|---|---|
+| **Arka Yüz (Backend)** | PHP 8.2 & Laravel 12 | RESTful API, Scraper Servisi, Export Servisi |
+| **Veritabanı** | MongoDB 7.0 & `mongodb/laravel-mongodb` | NoSQL doküman tabanlı işletme ve görev depolama |
+| **Ön Yüz (Frontend)** | AngularJS 1.8 & Bootstrap 5 & FontAwesome 6 | Harita arayüzü, canlı çizim, veri tablosu |
+| **Harita Servisi** | Google Maps JavaScript API (Drawing Tools) | Dairesel alan seçimi, koordinat/yarıçap yakalama |
+| **Dışa Aktarma** | Maatwebsite Excel, Barryvdh DomPDF, GD Library | XLSX, PDF, PNG formatlarında veri üretimi |
+| **API Dokümantasyonu**| Swagger UI (OpenAPI 3.0 / `darkaonline/l5-swagger`) | İnteraktif API test ve dokümantasyon arayüzü |
+| **Konteynerizasyon** | Docker & Docker Compose | Çoklu servis mimarisi (Backend, Frontend, MongoDB) |
+| **Sürekli Entegrasyon** | GitHub Actions CI/CD | Otomatik testler, ESLint ve Docker derleme doğrulama |
 
-### Gereksinimler
+---
 
-- Docker Engine (v24+)
-- Docker Compose (v2+)
-- Git
+## ⚡ Hızlı Başlangıç
 
-### 1. Depoyu Klonlayin
+### Sistem Gereksinimleri
+- **Docker** (v24+) & **Docker Compose** (v2+)
+- **Git**
 
+### 1. Depoyu Klonlayın
 ```bash
 git clone https://github.com/asisec/maps-scraper.git
 cd maps-scraper
 ```
 
-### 2. Ortam Degiskenlerini Hazirlayin
-
+### 2. Ortam Değişkenlerini Hazırlayın
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-`backend/.env` dosyasini acin ve asagidaki degeri doldurun:
-
-```
-GOOGLE_MAPS_JS_API_KEY=buraya_harita_goruntusu_icin_api_anahtarinizi_yazin
-```
-
-### 3. Uygulamayi Baslatma (Tek Komut)
-
+### 3. Tek Komutla Kurulum ve Başlatma
 ```bash
 make setup
 ```
+*(Windows PowerShell kullanıcıları `docker-compose up -d --build` veya `make setup` çalıştırabilir.)*
 
-Bu komut sirasyla:
-1. Docker imajlarini olusturur
-2. Konteynerleri baslatir
-3. Laravel uygulama anahtarini uretir
-4. Veritabani koleksiyonlarini hazirlar
+Bu komut sırasıyla:
+1. Docker servis imajlarını derler (Backend, Frontend, MongoDB).
+2. Konteynerleri arka planda başlatır.
+3. Laravel uygulama anahtarını üretir.
+4. MongoDB koleksiyonlarını ve indekslerini hazırlar.
+5. Swagger API dokümantasyonunu otomatik derler.
 
-### 4. Uygulamaya Erisim
+---
 
-| Servis | Adres |
-|---|---|
-| On Yuz (Kullanici Arayuzu) | http://localhost:4200 |
-| Arka Yuz API | http://localhost:8000 |
-| Swagger UI | http://localhost:8000/api/documentation |
+## 🌐 Uygulama Bağlantıları
 
-## Docker Komutlari
+| Servis | URL | Açıklama |
+|---|---|---|
+| **Kullanıcı Paneli** | [http://localhost:4200/#/panel](http://localhost:4200/#/panel) | Harita üzerinden alan seçimi, tarama ve dışa aktarma |
+| **Yönetim Paneli** | [http://localhost:4200/#/admin](http://localhost:4200/#/admin) | Yönetici karşılama sayfası |
+| **REST API** | [http://localhost:8000/api](http://localhost:8000/api) | Laravel API uç noktaları |
+| **Swagger UI** | [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation) | İnteraktif API Dokümantasyonu |
 
-```bash
-make build       # Docker imajlarini olusturur
-make up          # Konteynerleri baslatir (arka planda)
-make down        # Konteynerleri durdurur
-make restart     # Yeniden baslatir
-make logs        # Canli log akisi
-make ps          # Konteyner durumlarini listeler
-make shell-backend   # Backend konteyneri icine girer
-make shell-mongo     # MongoDB kabugundan baglanir
-make fresh       # Tum verileri silerek temiz kurulum yapar
+---
+
+## 🗺️ Kullanım Rehberi
+
+1. Tarayıcınızdan **[http://localhost:4200/#/panel](http://localhost:4200/#/panel)** adresine gidin.
+2. Haritanın üst orta kısmındaki **Daire Çizim Aracı** butonuna tıklayın.
+3. Taramak istediğiniz alanın merkezine tıklayıp sürükleyerek dairesel bir alan çizin.
+4. Seçtiğiniz alanın merkez koordinatları ve yarıçapı otomatik olarak tespit edilir.
+5. **Taramayı Başlat** butonuna tıklayın.
+6. Kazınan işletmeler anında harita üzerinde numaralı işaretçiler (markers) ile gösterilir ve alttaki veri tablosuna yüklenir.
+7. İlgili işletmeye haritada odaklanmak için tablodaki harita simgesine tıklayabilirsiniz.
+8. Verileri indirmek için tablonun sağ üstündeki butonları kullanabilirsiniz:
+   - 📊 **Excel Olarak İndir:** `.xlsx` tablosu indirir.
+   - 📄 **PDF Olarak İndir:** Yatay A4 formatında temiz `.pdf` raporu üretir.
+   - 🖼️ **Resim Olarak İndir:** Yüksek çözünürlüklü `.png` tablo görseli oluşturur.
+
+---
+
+## 📡 REST API Uç Noktaları
+
+| Metot | Uç Nokta | Açıklama |
+|---|---|---|
+| `POST` | `/api/scrape` | Dairesel koordinat ve yarıçapa göre işletmeleri kazır ve kaydeder |
+| `GET` | `/api/businesses` | Kayıtlı işletmeleri listeler (filtre: `job_id`, `limit`) |
+| `GET` | `/api/jobs/{id}` | Tarama görevi durumunu ve istatistiklerini döner |
+| `GET` | `/api/export/excel` | İşletme verilerini XLSX olarak indirir |
+| `GET` | `/api/export/pdf` | İşletme verilerini PDF olarak indirir |
+| `GET` | `/api/export/image` | İşletme verilerini PNG resmi olarak indirir |
+| `GET` | `/api/documentation` | Swagger UI dokümantasyon sayfası |
+
+### Örnek Tarama İsteği (`POST /api/scrape`):
+```json
+{
+  "latitude": 39.9334,
+  "longitude": 32.8597,
+  "radius": 1000
+}
 ```
 
-## Harita Arayuzu Kullanimi
+---
 
-1. **http://localhost:4200/#/panel** adresine gidin
-2. Harita uzerinde bir daire cizmek icin daire aracini secin
-3. Taramak istediginiz alani daire ile isaretleyin
-4. **Taramayi Baslatl** dugmesine tiklayin
-5. Sonuclar tabloda listelendikten sonra su formatlarda indirin:
-   - **Excel Olarak Indir** — .xlsx dosyasi
-   - **PDF Olarak Indir** — .pdf dosyasi
-   - **Resim Olarak Indir** — .png dosyasi
+## 🛠️ Geliştirici ve Yönetim Komutları (Makefile)
 
-## Swagger API Dokumantasyonu
+```bash
+make setup          # Sıfırdan tam kurulum ve başlatma
+make up             # Konteynerleri arka planda çalıştırır
+make down           # Konteynerleri durdurur
+make restart        # Servisleri yeniden başlatır
+make logs           # Canlı Docker log akışı
+make test           # Laravel PHPUnit özellik ve birim testlerini çalıştırır
+make lint           # Frontend ESLint kontrolünü çalıştırır
+make docs           # Swagger dokümantasyonunu yeniden derler
+make shell-backend  # Backend konteyneri içine kabuk oturumu açar
+make shell-mongo    # MongoDB mongosh kabuğuna bağlanır
+make fresh          # Tüm veritabanı ve imajları sıfırlayarak temiz kurulum yapar
+```
 
-Arka yuz API endpoint'leri tam dokumantasyon ile birlikte gelir.
+---
 
-Swagger UI adresine gidin: http://localhost:8000/api/documentation
+## 🧪 Testleri Çalıştırma
 
-Mevcut endpoint'ler:
-- `POST /api/scrape` — Tarama islemini baslatir
-- `GET /api/export/excel` — Excel dosyasi indirir
-- `GET /api/export/pdf` — PDF dosyasi indirir
-- `GET /api/export/image` — Gorsel dosya indirir
+### Arka Yüz (Backend) Testleri
+```bash
+docker-compose exec -T backend php artisan test
+```
 
-## Proje Yapisi
+### Ön Yüz (Frontend) Lint Kontrolü
+```bash
+cd frontend && npm run lint
+```
+
+---
+
+## 📁 Proje Dizin Yapısı
 
 ```
 maps-scraper/
-├── backend/                 # Laravel PHP arka yuzu
+├── backend/                        # Laravel 12 REST API
 │   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Services/
-│   │   └── Models/
-│   ├── routes/api.php
+│   │   ├── Exports/               # Excel dışa aktarma sınıfları
+│   │   ├── Http/Controllers/Api/  # Scraper ve Export API kontrolcüleri
+│   │   ├── Models/                # MongoDB Business ve ScrapeJob modelleri
+│   │   └── Services/              # ScraperService ve ExportService
+│   ├── config/                    # database, services, l5-swagger yapılandırmaları
+│   ├── resources/views/exports/   # DomPDF şablonları
+│   ├── routes/api.php             # API rota tanımlamaları
+│   ├── tests/Feature/             # ScraperApiTest suite
 │   ├── Dockerfile
 │   └── .env.example
-├── frontend/                # AngularJS on yuzu
+├── frontend/                       # AngularJS 1.8 SPA
 │   ├── app/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   └── views/
-│   ├── index.html
-│   ├── nginx.conf
+│   │   ├── controllers/           # PanelController, AdminController
+│   │   ├── services/              # ScraperService API istemcisi
+│   │   ├── views/                 # panel.html, admin.html
+│   │   ├── app.js                 # Rota ve modül tanımlamaları
+│   │   └── app.css                # Özel tema ve harita stilleri
+│   ├── index.html                 # Ana giriş sayfası
+│   ├── nginx.conf                 # Nginx web sunucu yapılandırması
+│   ├── package.json
 │   └── Dockerfile
 ├── docker/
-│   └── mongo/
-│       └── init.js          # MongoDB ilk kurulum scripti
-├── .github/
-│   └── workflows/
-│       └── main.yml         # CI/CD pipeline
-├── docker-compose.yml
-├── Makefile
-└── README.md
+│   └── mongo/init.js              # MongoDB kullanıcı ve veritabanı başlatma
+├── .github/workflows/main.yml      # CI/CD otomasyonu
+├── docker-compose.yml              # Konteyner orkestrasyonu
+├── Makefile                        # Yönetim ve kurulum kısayolları
+├── setup.sh                        # Bash kurulum betiği
+└── README.md                       # Proje dokümantasyonu
 ```
 
-## CI/CD Pipeline
+---
 
-Uygulamaya herhangi bir commit yapildiginda veya `main` branch'ine pull request acildiginda GitHub Actions otomatik olarak:
+## 📄 Lisans
 
-1. PHP 8.2 ortaminda Laravel testlerini calistirir
-2. Node.js 20 ile ESLint kontrolu yapar ve frontend'i derler
-3. Her iki Docker imajini da basariyla derledigini dogrular
-
-## Lisans
-
-MIT
+Bu proje **MIT Lisansı** altında sunulmaktadır.
